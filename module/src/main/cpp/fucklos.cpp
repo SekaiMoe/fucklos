@@ -22,10 +22,11 @@ using zygisk::ServerSpecializeArgs;
 class fucklos : public zygisk::ModuleBase {
 public:
     void onLoad(Api *api_, JNIEnv *env_) override {
+        LOGI("FUCKLOS: Starting daemon");
         this->api = api_;
         this->env = env_;
         package_count = 0;
-        LOGI("Module loaded");
+        LOGI("FUCKLOS: Module loaded Done");
     }
 
     void postAppSpecialize(const AppSpecializeArgs *args) override {
@@ -34,7 +35,7 @@ public:
         const char* process = env->GetStringUTFChars(args->nice_name, nullptr);
         if (!process) return;
 
-        LOGD("Processing: %s", process);
+        LOGD("FUCKLOS: Processing: %s", process);
 
         bool should_hook = true;
 
@@ -55,10 +56,10 @@ public:
         }
 
         if (should_hook) {
-            LOGI("Hooking target: %s", process);
+            LOGI("FUCKLOS: Hooking target: %s", process);
             hideSensitiveBuildInfo();
         } else {
-            LOGD("Skipped: not a target main process");
+            LOGD("FUCKLOS: Skipped: not a target main process");
         }
 
         env->ReleaseStringUTFChars(args->nice_name, process);
@@ -100,7 +101,7 @@ private:
 
         FILE* file = fopen(path, "r");
         if (!file) {
-            LOGE("Failed to open package.list");
+            LOGE("FUCKLOS: Failed to open package.list");
             return;
         }
 
@@ -111,12 +112,12 @@ private:
             if (line[0] == '\0' || line[0] == '#') continue;
             strncpy(target_packages[count], line, MAX_PKG_LEN - 1);
             target_packages[count][MAX_PKG_LEN - 1] = '\0';
-            LOGD("Added: %s", target_packages[count]);
+            LOGD("FUCKLOS: Added: %s", target_packages[count]);
             count++;
         }
         fclose(file);
         package_count = count;
-        LOGI("Loaded %d packages", count);
+        LOGI("FUCKLOS: Loaded %d packages", count);
     }
 
     // Case-insensitive substring search
@@ -186,6 +187,8 @@ private:
         const char* replacements[] = {"StockOS", "Stock", "stock", "user"};
         int num_replacements = 4;
 
+        LOGI("FUCKLOS: Starting hooking %s");
+
         for (int i = 0; fields[i] != NULL; ++i) {
             jfieldID fid = env->GetStaticFieldID(build_class, fields[i], "Ljava/lang/String;");
             if (!fid) continue;
@@ -214,7 +217,7 @@ private:
             }
 
             if (changed) {
-                LOGI("Modified %s: '%s' → '%s'", fields[i], value, new_value);
+                LOGI("FUCKLOS: Modified %s: '%s' → '%s'", fields[i], value, new_value);
                 jstring jnew = env->NewStringUTF(new_value);
                 env->SetStaticObjectField(build_class, fid, jnew);
                 env->DeleteLocalRef(jnew);
